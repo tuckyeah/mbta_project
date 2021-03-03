@@ -36,3 +36,12 @@
     transform: rotate(360deg);
   }
 }
+
+ul li {
+    cursor: pointer;
+    padding: 5px;
+}
+
+ul li:hover {
+  font-weight: bold;
+}
