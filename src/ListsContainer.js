@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import ListComponent from './ListComponent';
 
@@ -9,7 +9,8 @@ const ListsContainer = props => {
     selectedData,
     departureTime,
     routeData,
-    stopNames
+    stopNames,
+    onDirectionClick
   } = props;
 
   return (
@@ -30,7 +31,7 @@ const ListsContainer = props => {
       {activeStep === 'route' && (
         <ListComponent
           listItems={Object.keys(routeData)} 
-          listKey={'route'} 
+          listKey={activeStep} 
           onItemClick={props.onRouteClick}
         />
       )}
@@ -38,7 +39,7 @@ const ListsContainer = props => {
       {activeStep === 'stop' && (
         <ListComponent
           listItems={stopNames}
-          listKey={'stop'}
+          listKey={activeStep}
           onItemClick={props.onStopClick}
         />
       )}
@@ -46,8 +47,8 @@ const ListsContainer = props => {
       {activeStep === 'direction' && (
         <ListComponent
           listItems={routeData[selectedData.route]}
-          listKey={'direction'}
-          onItemClick={props.onDirectionClick}
+          listKey={activeStep}
+          onItemClick={onDirectionClick}
         />
       )}
     </div>

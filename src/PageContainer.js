@@ -7,8 +7,8 @@ const MBTA_BASE_URL = 'https://api-v3.mbta.com/';
 /**
   * Mappings of the sub-route maps for each endpoint. 
   * Routes is hardcoded to filter on Light & Heavy Rail
-  * Stops takes in a routeName
-  * Prediction is harcoded to return only one (next) result, and takes in a directionId (0,1) and stopId
+  * Stops takes in a routeName (str)
+  * Prediction is harcoded to return only one (next) result, and takes in a directionId (0,1) and stopId (str)
   */
 const MBTA_API_MAP = {
   route: 'routes?filter%5Btype%5D=0%2C1',
@@ -16,23 +16,39 @@ const MBTA_API_MAP = {
   prediction: (directionId, stopId) => `predictions?page%5Boffset%5D=0&page%5Blimit%5D=1&filter%5Bdirection_id%5D=${directionId}&filter%5Bstop%5D=${stopId}`
 }
 
-const QUERY_ORDER = ['route', 'stop', 'direction', 'prediction']
+// TODO: What am I doing with this.
+// const QUERY_ORDER = ['route', 'stop', 'direction', 'prediction']
 
-// TODO: I bet there is a cleaner and more robust way to do this.
 // TODO: Also improve error handling
-export const fetchMBTAData = (queryParams) => {
-  return fetch(`${MBTA_BASE_URL}${queryParams}`)
+/**
+  * Generic function to hit the MBTA API with a specified formatted URL query path.
+  * 
+  * @param {str} queryPath - formatted URl path
+  * 
+  * @returns {Promise} JSON-encoded Response from API
+  */
+export const fetchMBTAData = (queryPath) => {
+  return fetch(`${MBTA_BASE_URL}${queryPath}`)
     .then(res => res.json())
     .then(res => {
-        console.log(res)
-        return res
+        console.log(res);
+        return res;
     })
     .catch(err => console.error(err))
 }
 
-/** Given an obj of routeData from the API, retrieves and stores the relevant route name(id)
-  * & corresponding directional information for later use (to save us the add'l API call) 
+/** 
+  * Given an obj of routeData from the API, retrieves and stores the route name(id)
+  * & corresponding directional information for later use (to save us the add'l API call).
   * 
+  * This assumes these are the only two data points we will ever need from this dataset for brevity, but
+  * could be adapted to store object of key/value pairs by route name/ID if needed.
+  * This is also nice because the Route ID is human readable and just the line name.
+  * We're also in luck because the direction data is always a tuple, and direction_id represents its index.
+  * 
+  * @param {obj} routeData
+  * 
+  * @returns {obj} Object in the shape of {routeId: [directionNames]}
   */
 export const formatRouteData = (routeData) => {
   return routeData.reduce((acc, curr) => {
@@ -43,6 +59,17 @@ export const formatRouteData = (routeData) => {
   }, {})
 }
 
+/** 
+  * Given an obj of stopData from the API, retrieves and stores the stop name and stop ID
+  * 
+  * Similar to the above, this assumes that this is the only data we will need, but could be
+  * refactored to store an object instead. Unlike the above, the stop name is _not_ the same as the ID,
+  * and the ID is not reader-friendly.
+  * 
+  * @param {obj} stopData
+  * 
+  * @returns {obj} Object in the shape of {stopName: stopId(string)}
+  */
 export const formatStopData = (stopData) => {
   return stopData.reduce((acc, curr) => {
     return {
@@ -104,25 +131,22 @@ export default class PageContainer extends Component {
     //   })
     // }
 
-    handleRouteClick = (selectedKey, value) => {
-      // this.setState((prevState) => {
-      //   return {
-      //     selected: {
-      //       ...prevState.selected,
-      //       [selectedKey]: value
-      //     },
-      //     activeStep: 'stop'
-      //   }
-      // }, this.fetchStopsData)
-      this.handleClickOnItem({
-        selectedKey,
-        value,
-        nextStep: 'stop',
-        cb: this.fetchStopsData
-      })
-    }
-
-    handleClickOnItem = ({selectedKey, value, nextStep, cb}) => {
+    /**
+      * Generic handler for all list item clicks. Updates state with the
+      * selected key/value pair from the list, and updates activeStep with the provided
+      * nextStep, to indicate which part of the process we are on
+      * (or none if we have reached the end of the line). Finally, calls the provided callback
+      * to fetch the next data set.
+      * 
+      * String comparison is a bit risky so normally I would consider using constants, but felt this
+      * was a bit easier to read, and a bit quicker to write.
+      *
+      * @param {obj} selectedKey: (str) - the selected field we are updating
+      *              value: (str) - the selection
+      *              nextStep: (str) - the next step in the process (route, stop, direction)
+      *              cb: (func) - a callback function for fetching the next data set
+      */
+    handleItemClick = ({selectedKey, value, nextStep, cb}) => {
       this.setState((prevState) => {
         return {
           selected: {
@@ -134,7 +158,24 @@ export default class PageContainer extends Component {
       }, cb)
     }
 
-    // TODO: this sequence index approach doesn't work at all...
+    handleRouteClick = (selectedKey, value) => {
+      // this.setState((prevState) => {
+      //   return {
+      //     selected: {
+      //       ...prevState.selected,
+      //       [selectedKey]: value
+      //     },
+      //     activeStep: 'stop'
+      //   }
+      // }, this.fetchStopsData)
+      this.handleItemClick({
+        selectedKey,
+        value,
+        nextStep: 'stop',
+        cb: this.fetchStopsData
+      })
+    }
+
     handleStopClick = (selectedKey, value) => {
       // this.setState((prevState) => {
       //   return {
@@ -145,7 +186,9 @@ export default class PageContainer extends Component {
       //     activeStep: 'direction'
       //   }
       // })
-      this.handleClickOnItem({selectedKey, value, nextStep: 'direction'})
+      // No need to provide a callback here - we don't need to fetch any directional data,
+      // because we already have it when we got route data!
+      this.handleItemClick({selectedKey, value, nextStep: 'direction'})
     }
 
     // TODO: This can be much cleaner since this is a binary value.
@@ -159,11 +202,17 @@ export default class PageContainer extends Component {
       //     }
       //   }
       // }, this.fetchPredictionData)
-      this.handleClickOnItem({selectedKey, value, cb: this.fetchPredictionData})
+      // No need to provide a nextStep here - there is no next step!
+      this.handleItemClick({selectedKey, value, cb: this.fetchPredictionData})
     }
 
+    /**
+      * I think there is definitely room for optimization among these fetch calls.
+      * There's a lot of repeat code here.
+      */
     fetchStopsData = () => {
       const url = MBTA_API_MAP['stop'](this.state.selected.route)
+      this.setState({isLoading: true})
       return fetchMBTAData(url)
         .then(res => {
           if (!res?.data) {
@@ -171,8 +220,9 @@ export default class PageContainer extends Component {
           }
 
           this.setState({
-            stopData: formatStopData(res.data)
-          }, () => console.log(this.state.stopData))
+            stopData: formatStopData(res.data),
+            isLoading: false
+          })
         })
         .catch(err => {
           console.error(err)
@@ -183,11 +233,13 @@ export default class PageContainer extends Component {
     }
 
     fetchPredictionData = () => {
+      // TODO: add in some major error handling here, possibly lift out for testing purposes.
       const {selected: {direction, stop, route}, stopData, routeData} = this.state;
       console.log(stopData[stop])
       const directionIndex = routeData[route].indexOf(direction)
       console.log(directionIndex)
       const url = MBTA_API_MAP['prediction'](direction, stopData[stop])
+      this.setState({isLoading: true});
       return fetchMBTAData(url)
         .then(res => {
           console.log(res)
@@ -203,6 +255,7 @@ export default class PageContainer extends Component {
 
           this.setState({
             departureTime: departureTime.toString(),
+            isLoading: false
           })
         })
         .catch(err => {
@@ -211,6 +264,7 @@ export default class PageContainer extends Component {
         })
     }
 
+    // TODO: Figure out if there is a better/cleaner way to test this
     resetData = () => {
       this.setState({
         stopData: {},
@@ -230,7 +284,7 @@ export default class PageContainer extends Component {
         <div style={{width: '50%', border: '1px solid black'}}>
 
             {this.state.hasError && (
-                <p style={{color: 'red'}}>Something went wrong!</p>
+              <p style={{color: 'red'}}>Something went wrong!</p>
             )}
 
             {this.state.isPageLoading ? (

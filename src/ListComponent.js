@@ -1,14 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-// TODO: Fix up the key thing here
 const ListComponent = (props) => {
+  const {listKey, listItems, onItemClick} = props;
   return (
     <>
-    <p>{props.listKey}</p>
+    <p>{listKey}</p>
     <ul>
-      {props.listItems.map((item, index) => 
-        <li key={index} onClick={() => props.onItemClick(props.listKey, item)}>
+      {listItems.map((item, index) => 
+        <li key={index} onClick={() => onItemClick(listKey, item)}>
           {item}
         </li>
       )}
