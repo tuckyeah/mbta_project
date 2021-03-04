@@ -10,7 +10,8 @@ const MBTA_BASE_URL = 'https://api-v3.mbta.com/';
   */
 const MBTA_API_MAP = {
   routes: 'routes?filter%5Btype%5D=0%2C1',
-  stops: (routeName) => `stops?filter%5Broute%5D=${routeName}`
+  stops: (routeName) => `stops?filter%5Broute%5D=${routeName}`,
+  prediction: (directionId, stopId) => `predictions?page%5Boffset%5D=0&page%5Blimit%5D=1&filter%5Bdirection_id%5D=${directionId}&filter%5Bstop%5D=${stopId}`
 }
 
 // The ordering of the data points we need to fetch.
@@ -46,8 +47,17 @@ export const formatRouteData = (routeData) => {
   return routeData.reduce((acc, curr) => {
     return {
       [curr.id]: {
-        direction_names: {...curr.attributes.direction_names}
+        ...curr.attributes.direction_names
       },
+      ...acc
+    }
+  }, {})
+}
+
+export const formatStopData = (stopData) => {
+  return stopData.reduce((acc, curr) => {
+    return {
+      [curr.attributes.name]: curr.id,
       ...acc
     }
   }, {})
@@ -59,12 +69,14 @@ export default class PageContainer extends Component {
       hasError: false,
       routeData: [],
       stopNames: [],
+      stopData: {},
       sequenceIndex: 0,
       selected: {
         route: '',
         stop: '',
         direction: ''
-      }
+      },
+      departureTime: ''
     }
 
     // TODO: Trim down routeData to save just route name and direction destintation info
@@ -105,8 +117,8 @@ export default class PageContainer extends Component {
 
     // TODO: this sequence index approach doesn't work at all...
     handleStopClick = (selectedKey, value) => {
-      console.log('selectedKey', selectedKey);
-      console.log('value', value)
+      // console.log('selectedKey', selectedKey);
+      // console.log('value', value)
       this.setState((prevState) => {
         return {
           selected: {
@@ -118,14 +130,44 @@ export default class PageContainer extends Component {
       })
     }
 
+    // TODO: This can be much cleaner since this is a binary value.
+    handleDirectionClick = (selectedKey, value) => {
+      this.setState((prevState) => {
+        return {
+          selected: {
+            ...prevState.selected,
+            [selectedKey]: value
+          },
+          sequenceIndex: prevState.sequenceIndex + 1
+        }
+      }, this.fetchPredictionData)
+    }
+
     fetchStopsData = () => {
       const mapKey = QUERY_SEQUENCE[this.state.sequenceIndex];
       const url = MBTA_API_MAP['stops'](this.state.selected.route)
       return fetchMBTAData(url)
         .then(res => {
           this.setState({
+            stopData: formatStopData(res.data),
             stopNames: getStopNameData(res.data)
-          }, () => console.log(this.state.stopNames))
+          }, () => console.log(this.state.stopData))
+        })
+        .catch(err => console.error(err))
+    }
+
+    fetchPredictionData = () => {
+      const {selected: {direction, stop}, stopData} = this.state;
+      console.log(stopData[stop])
+      const url = MBTA_API_MAP['prediction'](direction, stopData[stop])
+      return fetchMBTAData(url)
+        .then(res => {
+          console.log(res)
+          console.log(res.data[0].attributes.departure_time)
+          const departureTime = new Date(res.data[0].attributes.departure_time)
+          this.setState({
+            departureTime: departureTime.toString()
+          })
         })
         .catch(err => console.error(err))
     }
@@ -139,11 +181,13 @@ export default class PageContainer extends Component {
               <p>Loading...</p>
             ) : (
               <ListsContainer 
-                routeNames={this.state.routeNameData}
-                stopNames={this.state.stopNames}
+                routeData={this.state.routeData}
+                stopNames={Object.keys(this.state.stopData)}
                 selectedData={this.state.selected}
                 onRouteClick={this.handleItemClick}
                 onStopClick={this.handleStopClick}
+                onDirectionClick={this.handleDirectionClick}
+                departureTime={this.state.departureTime}
               />
             )} 
 
