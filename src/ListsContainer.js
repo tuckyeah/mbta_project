@@ -2,46 +2,53 @@ import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 import ListComponent from './ListComponent';
 
-export const formatDirectionData = (routeData, selectedStopName) => {
-  console.log(routeData[selectedStopName])
-  return Object.values(routeData[selectedStopName])
-}
+// TODO: Think about how we want to display Direction, since this is stored as (and queried as) a binary
 const ListsContainer = props => {
+  const {
+    activeStep,
+    selectedData,
+    departureTime,
+    routeData,
+    stopNames
+  } = props;
+
   return (
-    <div>
-      <ListComponent
-        listItems={Object.keys(props.routeData)} 
-        listKey={'route'} 
-        onItemClick={props.onRouteClick}
-      />
-      {props.selectedData.route && (
-        <p style={{color: 'blue'}}>You've selected the {props.selectedData.route} line</p>
+    <div style={{minHeight: '200px'}}>
+      {departureTime ? (
+        <h2>Your next departure time is {departureTime}</h2>
+      ) : (
+        <p style={{fontSize: '2em'}}>
+          Please select a {activeStep}
+        </p>
       )}
-      {props.stopNames && (
+      <div>
+        {Object.keys(selectedData).map((data, index) => {
+          return (<p key={index}>{data.toUpperCase()}: { selectedData[data] }</p>)
+        })}
+      </div>
+
+      {activeStep === 'route' && (
         <ListComponent
-          listItems={props.stopNames}
+          listItems={Object.keys(routeData)} 
+          listKey={'route'} 
+          onItemClick={props.onRouteClick}
+        />
+      )}
+
+      {activeStep === 'stop' && (
+        <ListComponent
+          listItems={stopNames}
           listKey={'stop'}
           onItemClick={props.onStopClick}
         />
       )}
-      {props.selectedData.stop && (
-        <>
-        <p style={{'color': 'green'}}> You've selected the {props.selectedData.stop} stop</p>
+
+      {activeStep === 'direction' && (
         <ListComponent
-          listItems={formatDirectionData(props.routeData, props.selectedData.route)}
+          listItems={routeData[selectedData.route]}
           listKey={'direction'}
-          onItemClick={(key, value)=>{
-            // this works because the id of the direction is always its index. 
-            // TODO: this is horrifically messy and repetitive - we can definitely clean it up
-            const directionKey = Object.values(props.routeData[props.selectedData.route]).indexOf(value)
-            console.log(directionKey)
-            props.onDirectionClick('direction', directionKey)
-          }}
+          onItemClick={props.onDirectionClick}
         />
-        </>
-      )}
-      {props.departureTime && (
-        <h2>Your next departure time is {props.departureTime}</h2>
       )}
     </div>
   )
@@ -54,7 +61,8 @@ ListsContainer.propTypes = {
   onRouteClick: PropTypes.func.isRequired,
   onStopClick: PropTypes.func.isRequired,
   onDirectionClick: PropTypes.func.isRequired,
-  departureTime: PropTypes.string.isRequired
+  departureTime: PropTypes.string.isRequired,
+  activeStep: PropTypes.string.isRequired
 };
 
 ListsContainer.defaultProps = {

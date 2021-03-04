@@ -40,8 +40,12 @@
 ul li {
     cursor: pointer;
     padding: 5px;
+    list-style-type: none;
+    margin: 5px;
+    border: 1px solid grey;
 }
 
 ul li:hover {
   font-weight: bold;
+  background-color: rgba(88, 144, 187, 0.42);
 }
