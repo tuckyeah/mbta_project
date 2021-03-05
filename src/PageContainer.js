@@ -1,8 +1,6 @@
-import React, {Component, Fragment} from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import ListsContainer from './ListsContainer';
-
-// Base URL for the MBTA API
-const MBTA_BASE_URL = 'https://api-v3.mbta.com/';
 
 /**
   * Mappings of the sub-route maps for each endpoint. 
@@ -18,24 +16,6 @@ const MBTA_API_MAP = {
 
 // TODO: What am I doing with this.
 // const QUERY_ORDER = ['route', 'stop', 'direction', 'prediction']
-
-// TODO: Also improve error handling
-/**
-  * Generic function to hit the MBTA API with a specified formatted URL query path.
-  * 
-  * @param {str} queryPath - formatted URl path
-  * 
-  * @returns {Promise} JSON-encoded Response from API
-  */
-export const fetchMBTAData = (queryPath) => {
-  return fetch(`${MBTA_BASE_URL}${queryPath}`)
-    .then(res => res.json())
-    .then(res => {
-        console.log(res);
-        return res;
-    })
-    .catch(err => console.error(err))
-}
 
 /** 
   * Given an obj of routeData from the API, retrieves and stores the route name(id)
@@ -79,7 +59,7 @@ export const formatStopData = (stopData) => {
   }, {})
 }
 
-export default class PageContainer extends Component {
+class PageContainer extends Component {
     state = {
       isPageLoading: true,
       hasError: false,
@@ -94,16 +74,17 @@ export default class PageContainer extends Component {
       departureTime: ''
     }
 
-    // TODO: Trim down routeData to save just route name and direction destintation info
-    // also revisit the way we are fetching
     /**
       * On initial page load, get Routes data. 
       * On successful fetch, set isLoading to false and format/update state with routeData
       * On error, display generic error message to user.
       */
     componentDidMount() {
-      fetchMBTAData(MBTA_API_MAP[this.state.activeStep])
+      this.props.fetchMBTAData(MBTA_API_MAP[this.state.activeStep])
       .then(res => {
+        if (!res?.data || !res.data.length) {
+          throw new Error()
+        }
         this.setState({
           isPageLoading: false,
           routeData: formatRouteData(res.data)
@@ -111,25 +92,11 @@ export default class PageContainer extends Component {
       })
       .catch(() => {
         this.setState({
+          isPageLoading: false,
           hasError: true
         })
       })
     }
-
-    // fetchRouteData = () => {
-    //   fetchMBTAData(MBTA_API_MAP[this.state.activeStep])
-    //   .then(res => {
-    //     this.setState({
-    //       isPageLoading: false,
-    //       routeData: formatRouteData(res.data)
-    //     })
-    //   })
-    //   .catch(() => {
-    //     this.setState({
-    //       hasError: true
-    //     })
-    //   })
-    // }
 
     /**
       * Generic handler for all list item clicks. Updates state with the
@@ -159,15 +126,6 @@ export default class PageContainer extends Component {
     }
 
     handleRouteClick = (selectedKey, value) => {
-      // this.setState((prevState) => {
-      //   return {
-      //     selected: {
-      //       ...prevState.selected,
-      //       [selectedKey]: value
-      //     },
-      //     activeStep: 'stop'
-      //   }
-      // }, this.fetchStopsData)
       this.handleItemClick({
         selectedKey,
         value,
@@ -177,15 +135,6 @@ export default class PageContainer extends Component {
     }
 
     handleStopClick = (selectedKey, value) => {
-      // this.setState((prevState) => {
-      //   return {
-      //     selected: {
-      //       ...prevState.selected,
-      //       [selectedKey]: value
-      //     },
-      //     activeStep: 'direction'
-      //   }
-      // })
       // No need to provide a callback here - we don't need to fetch any directional data,
       // because we already have it when we got route data!
       this.handleItemClick({selectedKey, value, nextStep: 'direction'})
@@ -193,15 +142,6 @@ export default class PageContainer extends Component {
 
     // TODO: This can be much cleaner since this is a binary value.
     handleDirectionClick = (selectedKey, value) => {
-      console.log(selectedKey, value)
-      // this.setState((prevState) => {
-      //   return {
-      //     selected: {
-      //       ...prevState.selected,
-      //       [selectedKey]: value
-      //     }
-      //   }
-      // }, this.fetchPredictionData)
       // No need to provide a nextStep here - there is no next step!
       this.handleItemClick({selectedKey, value, cb: this.fetchPredictionData})
     }
@@ -213,16 +153,17 @@ export default class PageContainer extends Component {
     fetchStopsData = () => {
       const url = MBTA_API_MAP['stop'](this.state.selected.route)
       this.setState({isLoading: true})
-      return fetchMBTAData(url)
+      return this.props.fetchMBTAData(url)
         .then(res => {
           if (!res?.data) {
             throw new Error();
           }
+          console.log(res)
 
           this.setState({
             stopData: formatStopData(res.data),
             isLoading: false
-          })
+          }, () => console.log(JSON.stringify(this.state.stopData)))
         })
         .catch(err => {
           console.error(err)
@@ -235,17 +176,16 @@ export default class PageContainer extends Component {
     fetchPredictionData = () => {
       // TODO: add in some major error handling here, possibly lift out for testing purposes.
       const {selected: {direction, stop, route}, stopData, routeData} = this.state;
-      console.log(stopData[stop])
       const directionIndex = routeData[route].indexOf(direction)
       console.log(directionIndex)
       const url = MBTA_API_MAP['prediction'](direction, stopData[stop])
       this.setState({isLoading: true});
-      return fetchMBTAData(url)
+      return this.props.fetchMBTAData(url)
         .then(res => {
           console.log(res)
           console.log(res.data[0].attributes.departure_time)
           // console.log(res.data[0].attributes)
-          if (res?.data.length <= 0 || !res.data[0].attributes) {
+          if (!res?.data.length || !res.data[0].attributes) {
             throw new Error()
           }
           const time = res.data[0].attributes.departure_time;
@@ -284,13 +224,13 @@ export default class PageContainer extends Component {
         <div style={{width: '50%', border: '1px solid black'}}>
 
             {this.state.hasError && (
-              <p style={{color: 'red'}}>Something went wrong!</p>
+              <p style={{color: 'red'}} data-testid={'errorSpinner'}>Something went wrong!</p>
             )}
 
             {this.state.isPageLoading ? (
-              <p>Loading...</p>
+              <p data-testid={'loadingSpinner'}>Loading...</p>
             ) : (
-              <>
+              <div data-testid={'listsContainer'}>
                 <ListsContainer
                   routeData={this.state.routeData}
                   stopNames={Object.keys(this.state.stopData)}
@@ -302,9 +242,15 @@ export default class PageContainer extends Component {
                   activeStep={this.state.activeStep}
                 />
                 <button onClick={this.resetData}>Reset</button>
-              </>
+              </div>
             )}
         </div>
       )
     }
 }
+
+PageContainer.propTypes = {
+  fetchMBTAData: PropTypes.func.isRequired
+}
+
+export default PageContainer;

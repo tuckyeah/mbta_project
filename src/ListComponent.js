@@ -18,9 +18,13 @@ const ListComponent = (props) => {
 }
 
 ListComponent.propTypes = {
-  listItems: PropTypes.array.isRequired,
+  listItems: PropTypes.array,
   listKey: PropTypes.string.isRequired,
-  onItemClick: PropTypes.func.isRequired
+  onItemClick: PropTypes.func.isRequired,
+};
+
+ListComponent.defaultProps = {
+  listItems: []
 };
 
 export default ListComponent;

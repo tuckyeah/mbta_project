@@ -10,15 +10,17 @@ const ListsContainer = props => {
     departureTime,
     routeData,
     stopNames,
-    onDirectionClick
+    onDirectionClick,
+    onRouteClick,
+    onStopClick
   } = props;
 
   return (
     <div style={{minHeight: '200px'}}>
       {departureTime ? (
-        <h2>Your next departure time is {departureTime}</h2>
+        <h2 data-testid={'departureTimeHeader'}>Your next departure time is {departureTime}</h2>
       ) : (
-        <p style={{fontSize: '2em'}}>
+        <p style={{fontSize: '2em'}} data-testid={'pleaseSelectBanner'}>
           Please select a {activeStep}
         </p>
       )}
@@ -29,27 +31,33 @@ const ListsContainer = props => {
       </div>
 
       {activeStep === 'route' && (
+        <span data-testid={'routeComponent'}>
         <ListComponent
           listItems={Object.keys(routeData)} 
           listKey={activeStep} 
-          onItemClick={props.onRouteClick}
+          onItemClick={onRouteClick}
         />
+        </span>
       )}
 
       {activeStep === 'stop' && (
+        <span data-testid={'stopComponent'}>
         <ListComponent
           listItems={stopNames}
           listKey={activeStep}
-          onItemClick={props.onStopClick}
+          onItemClick={onStopClick}
         />
+        </span>
       )}
 
       {activeStep === 'direction' && (
+        <span data-testid={'directionComponent'}>
         <ListComponent
           listItems={routeData[selectedData.route]}
           listKey={activeStep}
           onItemClick={onDirectionClick}
         />
+        </span>
       )}
     </div>
   )
