@@ -14,8 +14,7 @@ const MBTA_API_MAP = {
   prediction: (directionId, stopId) => `predictions?page%5Boffset%5D=0&page%5Blimit%5D=1&filter%5Bdirection_id%5D=${directionId}&filter%5Bstop%5D=${stopId}`
 }
 
-// TODO: What am I doing with this.
-// const QUERY_ORDER = ['route', 'stop', 'direction', 'prediction']
+const DATE_FORMAT_OPTIONS = {hour: '2-digit', minute: '2-digit', second: '2-digit'}
 
 /** 
   * Given an obj of routeData from the API, retrieves and stores the route name(id)
@@ -61,7 +60,7 @@ export const formatStopData = (stopData) => {
 
 class PageContainer extends Component {
     state = {
-      isPageLoading: true,
+      isLoading: true,
       hasError: false,
       activeStep: 'route',
       routeData: {},
@@ -86,15 +85,12 @@ class PageContainer extends Component {
           throw new Error()
         }
         this.setState({
-          isPageLoading: false,
+          isLoading: false,
           routeData: formatRouteData(res.data)
         })
       })
       .catch(() => {
-        this.setState({
-          isPageLoading: false,
-          hasError: true
-        })
+        this.handleError();
       })
     }
 
@@ -140,7 +136,6 @@ class PageContainer extends Component {
       this.handleItemClick({selectedKey, value, nextStep: 'direction'})
     }
 
-    // TODO: This can be much cleaner since this is a binary value.
     handleDirectionClick = (selectedKey, value) => {
       // No need to provide a nextStep here - there is no next step!
       this.handleItemClick({selectedKey, value, cb: this.fetchPredictionData})
@@ -158,53 +153,56 @@ class PageContainer extends Component {
           if (!res?.data) {
             throw new Error();
           }
-          console.log(res)
 
           this.setState({
             stopData: formatStopData(res.data),
             isLoading: false
-          }, () => console.log(JSON.stringify(this.state.stopData)))
+          })
         })
         .catch(err => {
-          console.error(err)
-          this.setState({
-            hasError: true
-          })
+          console.error(err);
+          this.handleError();
         })
     }
 
+    // There is also opportunity here for lifting out logic here to make more testable.
     fetchPredictionData = () => {
-      // TODO: add in some major error handling here, possibly lift out for testing purposes.
-      const {selected: {direction, stop, route}, stopData, routeData} = this.state;
-      const directionIndex = routeData[route].indexOf(direction)
-      console.log(directionIndex)
+      const {selected: {direction, stop}, stopData} = this.state;
       const url = MBTA_API_MAP['prediction'](direction, stopData[stop])
       this.setState({isLoading: true});
       return this.props.fetchMBTAData(url)
         .then(res => {
-          console.log(res)
-          console.log(res.data[0].attributes.departure_time)
-          // console.log(res.data[0].attributes)
           if (!res?.data.length || !res.data[0].attributes) {
             throw new Error()
           }
           const time = res.data[0].attributes.departure_time;
-
-          // TODO: lift this out to test, especially for null
           const departureTime = time ? new Date(time) : 'NOT FOUND'
-
           this.setState({
-            departureTime: departureTime.toString(),
+            departureTime: departureTime.toLocaleDateString(navigator.language, DATE_FORMAT_OPTIONS),
             isLoading: false
           })
         })
         .catch(err => {
           console.error(err)
-          this.setState({hasError: true})
+          this.handleError()
         })
     }
 
-    // TODO: Figure out if there is a better/cleaner way to test this
+    /**
+      * Generic error handler to set Loading to false and hasError to true. 
+      * Fired on all failed fetch calls
+      */
+    handleError = () => {
+      this.setState({
+        hasError: true,
+        isLoading: false
+      });
+    }
+
+    /**
+      * Used by the Reset button to clear all selected data back to an initial 'clean' state.
+      * Retain routeData to save us an API call.
+      */
     resetData = () => {
       this.setState({
         stopData: {},
@@ -221,16 +219,16 @@ class PageContainer extends Component {
 
     render() {
       return (
-        <div style={{width: '50%', border: '1px solid black'}}>
+        <div className={'main'}>
 
             {this.state.hasError && (
               <p style={{color: 'red'}} data-testid={'errorSpinner'}>Something went wrong!</p>
             )}
 
-            {this.state.isPageLoading ? (
+            {this.state.isLoading ? (
               <p data-testid={'loadingSpinner'}>Loading...</p>
             ) : (
-              <div data-testid={'listsContainer'}>
+              <span data-testid={'listsContainer'}>
                 <ListsContainer
                   routeData={this.state.routeData}
                   stopNames={Object.keys(this.state.stopData)}
@@ -242,7 +240,7 @@ class PageContainer extends Component {
                   activeStep={this.state.activeStep}
                 />
                 <button onClick={this.resetData}>Reset</button>
-              </div>
+              </span>
             )}
         </div>
       )

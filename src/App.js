@@ -17,10 +17,6 @@ export const fetchMBTAData = (queryPath) => {
   // console.log("Hello!")
   return fetch(`${MBTA_BASE_URL}${queryPath}`)
     .then(res => res.json())
-    .then(res => {
-        // console.log(res);
-        return res;
-    })
     .catch(err => console.error(err))
 }
 

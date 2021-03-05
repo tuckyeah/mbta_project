@@ -5,7 +5,6 @@ const ListComponent = (props) => {
   const {listKey, listItems, onItemClick} = props;
   return (
     <>
-    <p>{listKey}</p>
     <ul>
       {listItems.map((item, index) => 
         <li key={index} onClick={() => onItemClick(listKey, item)}>

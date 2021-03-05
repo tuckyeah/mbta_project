@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import ListComponent from './ListComponent';
 
-// TODO: Think about how we want to display Direction, since this is stored as (and queried as) a binary
 const ListsContainer = props => {
   const {
     activeStep,
@@ -24,7 +23,7 @@ const ListsContainer = props => {
           Please select a {activeStep}
         </p>
       )}
-      <div>
+      <div className={'selectedDataDisplay'}>
         {Object.keys(selectedData).map((data, index) => {
           return (<p key={index}>{data.toUpperCase()}: { selectedData[data] }</p>)
         })}
@@ -32,11 +31,11 @@ const ListsContainer = props => {
 
       {activeStep === 'route' && (
         <span data-testid={'routeComponent'}>
-        <ListComponent
-          listItems={Object.keys(routeData)} 
-          listKey={activeStep} 
-          onItemClick={onRouteClick}
-        />
+          <ListComponent
+            listItems={Object.keys(routeData)} 
+            listKey={activeStep} 
+            onItemClick={onRouteClick}
+          />
         </span>
       )}
 
