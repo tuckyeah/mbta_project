@@ -58,6 +58,7 @@ export const formatStopData = (stopData) => {
   }, {})
 }
 
+// This is the main Page Container which holds most of our business logic.
 class PageContainer extends Component {
     state = {
       isLoading: true,

@@ -4,7 +4,6 @@ import PageContainer from './PageContainer.js';
 // Base URL for the MBTA API
 const MBTA_BASE_URL = 'https://api-v3.mbta.com/';
 
-// TODO: Also improve error handling
 /**
   * Generic function to hit the MBTA API with a specified formatted URL query path.
   * There's definitely more to be done here w/r/t ensuring our queryPath is correct.

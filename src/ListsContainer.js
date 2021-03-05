@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import ListComponent from './ListComponent';
 
+// This is the main container component that is in charge of displaying the text on the page, as well as which list of data to show.
 const ListsContainer = props => {
   const {
     activeStep,
