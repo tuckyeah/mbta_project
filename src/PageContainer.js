@@ -3,17 +3,30 @@ import PropTypes from 'prop-types';
 import ListsContainer from './ListsContainer';
 
 /**
+  * Constants for the various keys used throughout the application.
+  * These are used to:
+  *   - indicate the active step
+  *   - in the MBTA_API_MAP
+  *   - indicate selected field
+  */
+export const ROUTE_KEY = 'route';
+export const STOP_KEY = 'stop';
+export const DIRECTION_KEY = 'direction';
+export const PREDICTION_KEY = 'prediction';
+
+/**
   * Mappings of the sub-route maps for each endpoint. 
   * Routes is hardcoded to filter on Light & Heavy Rail
   * Stops takes in a routeName (str)
   * Prediction is harcoded to return only one (next) result, and takes in a directionId (0,1) and stopId (str)
   */
 const MBTA_API_MAP = {
-  route: 'routes?filter%5Btype%5D=0%2C1',
-  stop: (routeName) => `stops?filter%5Broute%5D=${routeName}`,
-  prediction: (directionId, stopId) => `predictions?page%5Boffset%5D=0&page%5Blimit%5D=1&filter%5Bdirection_id%5D=${directionId}&filter%5Bstop%5D=${stopId}`
+  [ROUTE_KEY]: 'routes?filter%5Btype%5D=0%2C1',
+  [STOP_KEY]: (routeName) => `stops?filter%5Broute%5D=${routeName}`,
+  [PREDICTION_KEY]: (directionId, stopId) => `predictions?page%5Boffset%5D=0&page%5Blimit%5D=1&filter%5Bdirection_id%5D=${directionId}&filter%5Bstop%5D=${stopId}`
 }
 
+// Used to format the UTC date from the server into a nicer, more readable format.
 const DATE_FORMAT_OPTIONS = {hour: '2-digit', minute: '2-digit', second: '2-digit'}
 
 /** 
@@ -63,13 +76,13 @@ class PageContainer extends Component {
     state = {
       isLoading: true,
       hasError: false,
-      activeStep: 'route',
+      activeStep: ROUTE_KEY,
       routeData: {},
       stopData: {},
       selected: {
-        route: '',
-        stop: '',
-        direction: ''
+        [ROUTE_KEY]: '',
+        [STOP_KEY]: '',
+        [DIRECTION_KEY]: ''
       },
       departureTime: ''
     }
@@ -126,7 +139,7 @@ class PageContainer extends Component {
       this.handleItemClick({
         selectedKey,
         value,
-        nextStep: 'stop',
+        nextStep: STOP_KEY,
         cb: this.fetchStopsData
       })
     }
@@ -134,7 +147,7 @@ class PageContainer extends Component {
     handleStopClick = (selectedKey, value) => {
       // No need to provide a callback here - we don't need to fetch any directional data,
       // because we already have it when we got route data!
-      this.handleItemClick({selectedKey, value, nextStep: 'direction'})
+      this.handleItemClick({selectedKey, value, nextStep: DIRECTION_KEY})
     }
 
     handleDirectionClick = (selectedKey, value) => {
@@ -143,11 +156,10 @@ class PageContainer extends Component {
     }
 
     /**
-      * I think there is definitely room for optimization among these fetch calls.
-      * There's a lot of repeat code here.
+      * Retrieves the stops data.
       */
     fetchStopsData = () => {
-      const url = MBTA_API_MAP['stop'](this.state.selected.route)
+      const url = MBTA_API_MAP[STOP_KEY](this.state.selected.route)
       this.setState({isLoading: true})
       return this.props.fetchMBTAData(url)
         .then(res => {
@@ -169,7 +181,7 @@ class PageContainer extends Component {
     // There is also opportunity here for lifting out logic here to make more testable.
     fetchPredictionData = () => {
       const {selected: {direction, stop}, stopData} = this.state;
-      const url = MBTA_API_MAP['prediction'](direction, stopData[stop])
+      const url = MBTA_API_MAP[PREDICTION_KEY](direction, stopData[stop])
       this.setState({isLoading: true});
       return this.props.fetchMBTAData(url)
         .then(res => {
@@ -177,6 +189,8 @@ class PageContainer extends Component {
             throw new Error()
           }
           const time = res.data[0].attributes.departure_time;
+          // Sometimes we may not get a date time back if we're at the end of the line.
+          // This generic handler helps prevent a 1969 date from showing up.
           const departureTime = time ? new Date(time) : 'NOT FOUND'
           this.setState({
             departureTime: departureTime.toLocaleDateString(navigator.language, DATE_FORMAT_OPTIONS),
@@ -213,7 +227,7 @@ class PageContainer extends Component {
           stop: '',
           direction: ''
         },
-        activeStep: 'route',
+        activeStep: [ROUTE_KEY],
         departureTime: '',
       })
     }

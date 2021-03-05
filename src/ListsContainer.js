@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import ListComponent from './ListComponent';
+import {ROUTE_KEY, STOP_KEY, DIRECTION_KEY} from './PageContainer';
 
 // This is the main container component that is in charge of displaying the text on the page, as well as which list of data to show.
 const ListsContainer = props => {
@@ -30,7 +31,7 @@ const ListsContainer = props => {
         })}
       </div>
 
-      {activeStep === 'route' && (
+      {activeStep === ROUTE_KEY && (
         <span data-testid={'routeComponent'}>
           <ListComponent
             listItems={Object.keys(routeData)} 
@@ -40,7 +41,7 @@ const ListsContainer = props => {
         </span>
       )}
 
-      {activeStep === 'stop' && (
+      {activeStep === STOP_KEY && (
         <span data-testid={'stopComponent'}>
         <ListComponent
           listItems={stopNames}
@@ -50,7 +51,7 @@ const ListsContainer = props => {
         </span>
       )}
 
-      {activeStep === 'direction' && (
+      {activeStep === DIRECTION_KEY && (
         <span data-testid={'directionComponent'}>
         <ListComponent
           listItems={routeData[selectedData.route]}
