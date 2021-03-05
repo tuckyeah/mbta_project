@@ -12,6 +12,12 @@ This project does include several test cases, built using the Jest & React Testi
 
 This challenge was a delight, and I had a lot of fun with it!
 
+Relevant Files with Code:
+[App.js](https://github.com/tuckyeah/mbta_project/blob/main/src/App.js) - Top-level/entry point into app.
+[PageContainer.js](https://github.com/tuckyeah/mbta_project/blob/main/src/PageContainer.js) - Wrapper for page, bulk of logic lives here.
+[ListsContainer.js](https://github.com/tuckyeah/mbta_project/blob/main/src/ListsContainer.js) - Lists container which houses the logic for displaying which list/add'l text information.
+[ListComponent.js](https://github.com/tuckyeah/mbta_project/blob/main/src/ListComponent.js) - Represents an individual list of data.
+
 ## Aforementioned Boilerplate README content
 
 ## Available Scripts

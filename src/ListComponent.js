@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+// Represents an individual list of data
 const ListComponent = (props) => {
   const {listKey, listItems, onItemClick} = props;
   return (
