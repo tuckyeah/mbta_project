@@ -48,7 +48,7 @@ export const formatRouteData = (routeData) => {
       [curr.id]: [...curr.attributes.direction_names],
       ...acc
     }
-  }, {})
+  }, {});
 }
 
 /** 
@@ -68,7 +68,7 @@ export const formatStopData = (stopData) => {
       [curr.attributes.name]: curr.id,
       ...acc
     }
-  }, {})
+  }, {});
 }
 
 // This is the main Page Container which holds most of our business logic.
@@ -96,12 +96,12 @@ class PageContainer extends Component {
       this.props.fetchMBTAData(MBTA_API_MAP[this.state.activeStep])
       .then(res => {
         if (!res?.data || !res.data.length) {
-          throw new Error()
+          throw new Error();
         }
         this.setState({
           isLoading: false,
           routeData: formatRouteData(res.data)
-        })
+        });
       })
       .catch(() => {
         this.handleError();
@@ -132,7 +132,7 @@ class PageContainer extends Component {
           },
           activeStep: nextStep || ''
         }
-      }, cb)
+      }, cb);
     }
 
     handleRouteClick = (selectedKey, value) => {
@@ -141,26 +141,28 @@ class PageContainer extends Component {
         value,
         nextStep: STOP_KEY,
         cb: this.fetchStopsData
-      })
+      });
     }
 
     handleStopClick = (selectedKey, value) => {
       // No need to provide a callback here - we don't need to fetch any directional data,
       // because we already have it when we got route data!
-      this.handleItemClick({selectedKey, value, nextStep: DIRECTION_KEY})
+      this.handleItemClick({selectedKey, value, nextStep: DIRECTION_KEY});
     }
 
     handleDirectionClick = (selectedKey, value) => {
       // No need to provide a nextStep here - there is no next step!
-      this.handleItemClick({selectedKey, value, cb: this.fetchPredictionData})
+      this.handleItemClick({selectedKey, value, cb: this.fetchPredictionData});
     }
 
     /**
       * Retrieves the stops data.
       */
     fetchStopsData = () => {
-      const url = MBTA_API_MAP[STOP_KEY](this.state.selected.route)
-      this.setState({isLoading: true})
+      const url = MBTA_API_MAP[STOP_KEY](this.state.selected.route);
+
+      this.setState({isLoading: true});
+      
       return this.props.fetchMBTAData(url)
         .then(res => {
           if (!res?.data) {
@@ -170,7 +172,7 @@ class PageContainer extends Component {
           this.setState({
             stopData: formatStopData(res.data),
             isLoading: false
-          })
+          });
         })
         .catch(err => {
           console.error(err);
@@ -181,26 +183,31 @@ class PageContainer extends Component {
     // There is also opportunity here for lifting out logic here to make more testable.
     fetchPredictionData = () => {
       const {selected: {direction, stop}, stopData} = this.state;
-      const url = MBTA_API_MAP[PREDICTION_KEY](direction, stopData[stop])
+      const url = MBTA_API_MAP[PREDICTION_KEY](direction, stopData[stop]);
+
       this.setState({isLoading: true});
+
       return this.props.fetchMBTAData(url)
         .then(res => {
           if (!res?.data.length || !res.data[0].attributes) {
-            throw new Error()
+            throw new Error();
           }
-          const time = res.data[0].attributes.departure_time;
+          let departureTime = res.data[0].attributes.departure_time;
           // Sometimes we may not get a date time back if we're at the end of the line.
           // This generic handler helps prevent a 1969 date from showing up.
-          const departureTime = time ? new Date(time) : 'NOT FOUND'
+          departureTime = departureTime ?
+                          (new Date(departureTime)).toLocaleDateString(navigator.language, DATE_FORMAT_OPTIONS) :
+                          'NOT FOUND';
+
           this.setState({
-            departureTime: departureTime.toLocaleDateString(navigator.language, DATE_FORMAT_OPTIONS),
+            departureTime,
             isLoading: false
-          })
+          });
         })
         .catch(err => {
-          console.error(err)
-          this.handleError()
-        })
+          console.error(err);
+          this.handleError();
+        });
     }
 
     /**
@@ -227,9 +234,9 @@ class PageContainer extends Component {
           stop: '',
           direction: ''
         },
-        activeStep: [ROUTE_KEY],
+        activeStep: ROUTE_KEY,
         departureTime: '',
-      })
+      });
     }
 
     render() {
@@ -240,11 +247,10 @@ class PageContainer extends Component {
               <p style={{color: 'red'}} data-testid={'errorSpinner'}>Something went wrong!</p>
             )}
 
-            {this.state.isLoading ? (
-              <p data-testid={'loadingSpinner'}>Loading...</p>
-            ) : (
+            <div style={{height: '100%'}}>
               <span data-testid={'listsContainer'}>
                 <ListsContainer
+                  isLoading={this.state.isLoading}
                   routeData={this.state.routeData}
                   stopNames={Object.keys(this.state.stopData)}
                   selectedData={this.state.selected}
@@ -256,7 +262,7 @@ class PageContainer extends Component {
                 />
                 <button onClick={this.resetData}>Reset</button>
               </span>
-            )}
+            </div>
         </div>
       )
     }
