@@ -23,7 +23,7 @@ ul li:hover {
 div.main {
   margin-top: 10px;
   width: 50%;
-  border: 5px inset #148057;
+/*  border: 1px solid #148057;*/
   margin: auto;
   min-height: 500px;
 }
