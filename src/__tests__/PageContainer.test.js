@@ -26,18 +26,7 @@ test('renders the error spinner on failure to receive response', async () => {
   })
 });
 
-test('displays Please Select Banner on successful load', async () => {
-  mockFetchMBTAData = function() {
-    return Promise.resolve(MOCK_ROUTES_RESPONSE);
-  }
-  render(<PageContainer fetchMBTAData={mockFetchMBTAData} />);
-  await waitFor(() => {
-    expect(screen.queryByTestId('listsContainer')).toBeTruthy();
-    expect(screen.queryByTestId('loadingSpinner')).not.toBeInTheDocument();
-  })
-});
-
-test('displays Please Select Banner on successful load', async () => {
+test('displays Lists Container on successful load', async () => {
   mockFetchMBTAData = function() {
     return Promise.resolve(MOCK_ROUTES_RESPONSE);
   }

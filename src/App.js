@@ -14,7 +14,7 @@ const MBTA_BASE_URL = 'https://api-v3.mbta.com/';
 export const fetchMBTAData = (queryPath) => {
   return fetch(`${MBTA_BASE_URL}${queryPath}`)
     .then(res => res.json())
-    .catch(err => console.error(err))
+    .catch(console.error)
 }
 
 function App() {

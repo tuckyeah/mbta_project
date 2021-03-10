@@ -8,6 +8,8 @@ commands needed to run the program (i think it should be as straightforward as c
 
 I've chosen to do this project in React because it is the framework I've spent the most time in, and the challenge spec struck me as best suited for a Single Page App. I briefly considered setting up an API using Python to demonstrate my fullstack skills, but upon further consideration, I realized such a step would be essentially redundant - we would be putting a simple wrapper around an existing API with no value add. While there are certainly use cases for doing such a thing (load balancing, aggregating data from multiple sources, providing certain auth functionalities, etc), it seemed a bit like overkill for these purposes.
 
+For error handling, I opted to leave in the `console.errors` to give us visibility into what went wrong. In real life/production code, I would never leave in console logs/errors, but would hopefully leverae some existing logging software. Since this is just a mini-project, I did intentionally choose to leave this in.
+
 This project does include several test cases, built using the Jest & React Testing Library. These tests are fairly specific to the tool as a SPA and focus on the rendering (or lack thereof) of certain page elements to indicate if data has properly loaded (or not loaded). They test some error handling, but there is room to expand here to make these tests more robust.
 
 This challenge was a delight, and I had a lot of fun with it!

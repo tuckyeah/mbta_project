@@ -30,7 +30,7 @@ const MBTA_API_MAP = {
 const DATE_FORMAT_OPTIONS = {hour: '2-digit', minute: '2-digit', second: '2-digit'}
 
 /** 
-  * Given an obj of routeData from the API, retrieves and stores the route name(id)
+  * Given an array of routeData from the API, retrieves and stores the route name(id)
   * & corresponding directional information for later use (to save us the add'l API call).
   * 
   * This assumes these are the only two data points we will ever need from this dataset for brevity, but
@@ -38,7 +38,7 @@ const DATE_FORMAT_OPTIONS = {hour: '2-digit', minute: '2-digit', second: '2-digi
   * This is also nice because the Route ID is human readable and just the line name.
   * We're also in luck because the direction data is always a tuple, and direction_id represents its index.
   * 
-  * @param {obj} routeData
+  * @param {arr} routeData
   * 
   * @returns {obj} Object in the shape of {routeId: [directionNames]}
   */
@@ -52,13 +52,13 @@ export const formatRouteData = (routeData) => {
 }
 
 /** 
-  * Given an obj of stopData from the API, retrieves and stores the stop name and stop ID
+  * Given an array of stopData from the API, retrieves and stores the stop name and stop ID
   * 
   * Similar to the above, this assumes that this is the only data we will need, but could be
   * refactored to store an object instead. Unlike the above, the stop name is _not_ the same as the ID,
   * and the ID is not reader-friendly.
   * 
-  * @param {obj} stopData
+  * @param {arr} stopData
   * 
   * @returns {obj} Object in the shape of {stopName: stopId(string)}
   */
@@ -103,9 +103,7 @@ class PageContainer extends Component {
           routeData: formatRouteData(res.data)
         });
       })
-      .catch(() => {
-        this.handleError();
-      })
+      .catch(this.handleError)
     }
 
     /**
@@ -114,9 +112,6 @@ class PageContainer extends Component {
       * nextStep, to indicate which part of the process we are on
       * (or none if we have reached the end of the line). Finally, calls the provided callback
       * to fetch the next data set.
-      * 
-      * String comparison is a bit risky so normally I would consider using constants, but felt this
-      * was a bit easier to read, and a bit quicker to write.
       *
       * @param {obj} selectedKey: (str) - the selected field we are updating
       *              value: (str) - the selection

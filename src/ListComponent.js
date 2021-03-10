@@ -5,7 +5,6 @@ import PropTypes from 'prop-types';
 const ListComponent = (props) => {
   const {listKey, listItems, onItemClick} = props;
   return (
-    <>
     <ul>
       {listItems.map((item, index) => 
         <li key={index} onClick={() => onItemClick(listKey, item)}>
@@ -13,7 +12,6 @@ const ListComponent = (props) => {
         </li>
       )}
     </ul>
-    </>
   )
 }
 
